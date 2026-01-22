@@ -1,0 +1,46 @@
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+include = '\.pyi?$'
+exclude = '''
+/(
+    migrations
+  | venv
+  | .venv
+  | env
+  | .env
+  | node_modules
+  | htmlcov
+  | .pytest_cache
+)/
+'''
+[tool.isort]
+profile = "black"
+line_length = 88
+skip = ["migrations", "venv", ".venv", "env", ".env", "node_modules", "htmlcov", ".pytest_cache"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+exclude = [
+    "migrations",
+    "venv",
+    ".venv",
+    "env",
+    ".env",
+    "node_modules",
+    "htmlcov",
+    ".pytest_cache",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # import order (isort yerine bile geçebilir ama biz isort kullanıyoruz)
+    "B",   # bugbear
+    "UP",  # pyupgrade
+]
+ignore = [
+    "B008",  # default argument callable (Django'da problem çıkarır)
+]
