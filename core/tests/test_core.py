@@ -61,7 +61,7 @@ class TestOrganizationCreateAPI:
 
         assert res.status_code == 201
         assert res.data["status"] == 201
-        assert res.data["message"] == "Organization oluşturuldu."
+        assert res.data["message"] == "The organization has been successfully created."
 
         org_id = res.data["data"]["id"]
         org = Organization.objects.get(id=org_id)
@@ -177,7 +177,10 @@ class TestOrganizationMeAPI:
         assert res.status_code == 200
         assert res.data["status"] == 200
         assert res.data["data"] is None
-        assert res.data["message"] == "Kullanıcı henüz bir organizasyona bağlı değil."
+        assert (
+            res.data["message"]
+            == "The user is not yet affiliated with an organization."
+        )
 
     def test_org_me_returns_none_when_org_deleted(self, client, url):
         org = Organization.objects.create(
@@ -203,7 +206,10 @@ class TestOrganizationMeAPI:
         assert res.status_code == 200
         assert res.data["status"] == 200
         assert res.data["data"] is None
-        assert res.data["message"] == "Kullanıcı henüz bir organizasyona bağlı değil."
+        assert (
+            res.data["message"]
+            == "The user is not yet affiliated with an organization."
+        )
 
     def test_org_me_returns_data_and_message_when_org_inactive(self, client, url):
         org = Organization.objects.create(
@@ -228,7 +234,7 @@ class TestOrganizationMeAPI:
 
         assert res.status_code == 200
         assert res.data["status"] == 200
-        assert res.data["message"] == "Organizasyon pasif durumda."
+        assert res.data["message"] == "The organization is inactive."
         assert res.data["data"]["id"] == org.id
         assert res.data["data"]["name"] == "InactiveOrg"
         assert res.data["data"]["slug"] == "inactive-org"
@@ -328,7 +334,7 @@ class TestOrganizationMeUpdateAPI:
         assert res.status_code == 200
         assert res.data["status"] == 200
         assert res.data["data"] is None
-        assert res.data["message"] == "Kullanıcı bir organizasyona bağlı değil."
+        assert res.data["message"] == "The user is not affiliated with an organization."
 
     def test_org_me_update_returns_none_when_org_deleted(self, client, url):
         org = Organization.objects.create(
@@ -355,7 +361,7 @@ class TestOrganizationMeUpdateAPI:
         assert res.status_code == 200
         assert res.data["status"] == 200
         assert res.data["data"] is None
-        assert res.data["message"] == "Kullanıcı bir organizasyona bağlı değil."
+        assert res.data["message"] == "The user is not affiliated with an organization."
 
     def test_org_me_update_success_updates_fields(self, client, url):
         org = Organization.objects.create(
@@ -387,7 +393,7 @@ class TestOrganizationMeUpdateAPI:
 
         assert res.status_code == 200
         assert res.data["status"] == 200
-        assert res.data["message"] == "Organization güncellendi."
+        assert res.data["message"] == "The organization has been updated."
         assert res.data["data"]["id"] == org.id
         assert res.data["data"]["name"] == "Org Updated"
         assert res.data["data"]["max_users"] == 10
@@ -440,7 +446,7 @@ class TestOrganizationMeUpdateAPI:
 
         assert res.status_code == 200
         assert res.data["status"] == 200
-        assert res.data["message"] == "Organization güncellendi."
+        assert res.data["message"] == "The organization has been updated."
         assert res.data["data"]["id"] == org.id
         assert res.data["data"]["is_deleted"] is True
 
@@ -508,7 +514,7 @@ class TestOrganizationInviteCreateAPI:
         res = client.post(url, {"email": "x@example.com"}, format="json")
         assert res.status_code == 400
         assert res.data["status"] == 400
-        assert res.data["message"] == "Önce organization oluştur."
+        assert res.data["message"] == "First, create an organization."
 
     def test_invite_success_email_sent(self, client, url, monkeypatch, settings):
         """
@@ -544,7 +550,7 @@ class TestOrganizationInviteCreateAPI:
 
         assert res.status_code == 201
         assert res.data["status"] == 201
-        assert res.data["message"] == "Davet gönderildi."
+        assert res.data["message"] == "The invitation has been sent."
 
         data = res.data["data"]
         assert data["email"] == "invitee@example.com"
@@ -598,8 +604,8 @@ class TestOrganizationInviteCreateAPI:
         assert res.status_code == 201
         assert res.data["status"] == 201
         expected_message = (
-            "Davet oluşturuldu; e-posta gönderilemedi. "
-            "Davet linkini kopyalayıp paylaşın."
+            "The invitation was created; the email could not be sent. "
+            "Copy and share the invitation link."
         )
 
         assert res.data["message"] == expected_message
@@ -624,7 +630,6 @@ class TestAcceptInviteAPI:
 
     @pytest.fixture
     def url(self):
-        # reverse patlarsa: return "/api/core/orgs/accept/invite/"
         return reverse("org-accept-invite")
 
     def create_org(self, name="Org", slug="org"):
@@ -670,7 +675,10 @@ class TestAcceptInviteAPI:
 
         assert res.status_code == 201
         assert res.data["status"] == 201
-        assert res.data["message"] == "Davet kabul edildi, kayıt tamamlandı."
+        assert (
+            res.data["message"]
+            == "The invitation has been accepted, registration is complete."
+        )
         assert res.data["data"]["username"] == "invitee"
         assert res.data["data"]["email"] == "invitee@example.com"
 
@@ -865,7 +873,7 @@ class TestOrganizationMembersListAPI:
 
         assert res.status_code == 200
         assert res.data["status"] == 200
-        assert res.data["message"] == "Organization bulunamadı."
+        assert res.data["message"] == "The organization could not be found."
         assert res.data["data"] == []
 
     def test_org_members_org_deleted_returns_empty_list(self, client, url):
@@ -892,7 +900,7 @@ class TestOrganizationMembersListAPI:
 
         assert res.status_code == 200
         assert res.data["status"] == 200
-        assert res.data["message"] == "Organization bulunamadı."
+        assert res.data["message"] == "The organization could not be found."
         assert res.data["data"] == []
 
     def test_list_members_paginated_ordered(self, client, url):
@@ -1069,7 +1077,7 @@ class TestOrganizationMemberRoleUpdateAPI:
         res = client.patch(self.url(999999), {"user_type": 1}, format="json")
         assert res.status_code == 404
         assert res.data["status"] == 404
-        assert res.data["message"] == "Kullanıcı bulunamadı."
+        assert res.data["message"] == "User not found."
 
     def test_target_user_deleted_returns_404(self, client, admin1, org1):
         deleted_user = Users.objects.create_user(
@@ -1086,7 +1094,7 @@ class TestOrganizationMemberRoleUpdateAPI:
         res = client.patch(self.url(deleted_user.id), {"user_type": 1}, format="json")
         assert res.status_code == 404
         assert res.data["status"] == 404
-        assert res.data["message"] == "Kullanıcı bulunamadı."
+        assert res.data["message"] == "User not found."
 
     def test_cannot_manage_user_from_other_org(self, client, admin1, member2):
         self.auth(client, admin1)
@@ -1134,7 +1142,7 @@ class TestOrganizationMemberRoleUpdateAPI:
 
         assert res.status_code == 200
         assert res.data["status"] == 200
-        assert res.data["message"] == "Üye admin yapıldı."
+        assert res.data["message"] == "The member has been made an admin."
 
         member1.refresh_from_db()
         assert member1.user_type == 1
@@ -1162,7 +1170,7 @@ class TestOrganizationMemberRoleUpdateAPI:
 
         assert res.status_code == 200
         assert res.data["status"] == 200
-        assert res.data["message"] == "Üye silindi."
+        assert res.data["message"] == "The member has been deleted."
 
         member1.refresh_from_db()
         assert member1.is_deleted is True
@@ -1235,7 +1243,7 @@ class TestOrganizationInvitationsListAPI:
 
         res = client.get(url)
         assert res.status_code == 404
-        assert res.data["detail"] == "Organization bulunamadı."
+        assert res.data["detail"] == "The organization could not be found."
 
     def test_org_deleted_returns_404(self, client, url):
         org = self.create_org(is_deleted=True)
@@ -1251,7 +1259,7 @@ class TestOrganizationInvitationsListAPI:
 
         res = client.get(url)
         assert res.status_code == 404
-        assert res.data["detail"] == "Organization bulunamadı."
+        assert res.data["detail"] == "The organization could not be found."
 
     def test_default_status_pending_filters_is_used_false(self, client, url):
         org = self.create_org()
@@ -1379,7 +1387,7 @@ class TestOrganizationInvitationsListAPI:
 
         res = client.get(url + "?status=wrong")
         assert res.status_code == 400
-        assert res.data["detail"] == "Geçersiz status parametresi. pending|used|all"
+        assert res.data["detail"] == "Invalid status parameter. pending|used|all"
 
     def test_orders_by_expires_at_desc(self, client, url):
         org = self.create_org()
@@ -1489,7 +1497,7 @@ class TestOrganizationInvitationsListAPISecond:
 
         res = client.get(url)
         assert res.status_code == 404
-        assert res.data["detail"] == "Organization bulunamadı."
+        assert res.data["detail"] == "The organization could not be found."
 
     def test_org_deleted_returns_404(self, client, url):
         org = self.create_org(is_deleted=True)
@@ -1498,7 +1506,7 @@ class TestOrganizationInvitationsListAPISecond:
 
         res = client.get(url)
         assert res.status_code == 404
-        assert res.data["detail"] == "Organization bulunamadı."
+        assert res.data["detail"] == "The organization could not be found."
 
     def test_default_status_pending_filters_is_used_false(self, client, url):
         org = self.create_org()
@@ -1598,7 +1606,7 @@ class TestOrganizationInvitationsListAPISecond:
 
         res = client.get(url + "?status=wrong")
         assert res.status_code == 400
-        assert res.data["detail"] == "Geçersiz status parametresi. pending|used|all"
+        assert res.data["detail"] == "Invalid status parameter. pending|used|all"
 
     def test_status_param_is_case_insensitive_and_stripped(self, client, url):
         org = self.create_org()
@@ -1803,7 +1811,7 @@ class TestProjectCreateAPI:
         assert "appointed_person" in res.data
         assert (
             res.data["appointed_person"][0]
-            == "Atanan kişi aynı organization içinde olmalı."
+            == "The appointed person must be within the same organization."
         )
 
     def test_create_project_without_appointed_person(self, client, url):
@@ -1814,7 +1822,7 @@ class TestProjectCreateAPI:
         res = client.post(url, data=self.payload(appointed_person=None), format="json")
         assert res.status_code == 201
         assert res.data["status"] == 201
-        assert res.data["message"] == "Project oluşturuldu."
+        assert res.data["message"] == "The project has been created."
         assert "data" in res.data
         assert res.data["data"]["name"] == "Project A"
 
@@ -1964,7 +1972,9 @@ class TestOrganizationUsersAPI:
         res = client.get(url)
         assert res.status_code == 400
         assert res.data["status"] == 400
-        assert res.data["message"] == "Kullanıcıya bağlı bir organization bulunamadı."
+        assert (
+            res.data["message"] == "No organization associated with the user was found."
+        )
 
     def test_returns_403_if_user_not_admin_user_type_1(self, client, url):
         org = self.create_org()
@@ -2212,7 +2222,7 @@ class TestProjectListAPI:
         res = client.get(url)
         assert res.status_code == 404
         assert res.data["status"] == 404
-        assert res.data["message"] == "Organization bulunamadı."
+        assert res.data["message"] == "The organization could not be found."
 
     def test_lists_only_projects_in_same_org_and_not_deleted(self, client, url):
         org = self.create_org()
@@ -2440,7 +2450,7 @@ class TestMyAppointedProjectsAPI:
         res = client.get(url)
         assert res.status_code == 404
         assert res.data["status"] == 404
-        assert res.data["message"] == "Organization bulunamadı."
+        assert res.data["message"] == "The organization could not be found."
 
     def test_returns_only_projects_where_user_is_appointed_person(self, client, url):
         org = self.create_org()
@@ -2660,7 +2670,7 @@ class TestProjectUpdateAPI:
         res = client.patch(self.url(1), data={"name": "X"}, format="json")
         assert res.status_code == 404
         assert res.data["status"] == 404
-        assert res.data["message"] == "Organization bulunamadı."
+        assert res.data["message"] == "The organization could not be found."
 
     def test_project_not_found_returns_404_when_not_in_org(self, client):
         org1 = self.create_org(name="Org1", slug="org1")
@@ -2680,7 +2690,7 @@ class TestProjectUpdateAPI:
         res = client.patch(self.url(project_org2.id), data={"name": "X"}, format="json")
         assert res.status_code == 404
         assert res.data["status"] == 404
-        assert res.data["message"] == "Project bulunamadı."
+        assert res.data["message"] == "Project not found."
 
     def test_project_not_found_returns_404_when_deleted(self, client):
         org = self.create_org()
@@ -2694,7 +2704,7 @@ class TestProjectUpdateAPI:
         res = client.patch(self.url(project.id), data={"name": "X"}, format="json")
         assert res.status_code == 404
         assert res.data["status"] == 404
-        assert res.data["message"] == "Project bulunamadı."
+        assert res.data["message"] == "Project not found."
 
     def test_forbidden_if_not_admin_tester_or_appointed(self, client):
         org = self.create_org()
@@ -2711,7 +2721,7 @@ class TestProjectUpdateAPI:
         res = client.patch(self.url(project.id), data={"name": "Nope"}, format="json")
         assert res.status_code == 403
         assert res.data["status"] == 403
-        assert res.data["message"] == "Bu project için yetkin yok."
+        assert res.data["message"] == "There is no one qualified for this project."
 
     def test_admin_can_update_project(self, client):
         org = self.create_org()
@@ -2727,7 +2737,7 @@ class TestProjectUpdateAPI:
         )
         assert res.status_code == 200
         assert res.data["status"] == 200
-        assert res.data["message"] == "Project güncellendi."
+        assert res.data["message"] == "The project has been updated."
         assert res.data["data"]["name"] == "New Name"
 
         project.refresh_from_db()
@@ -2886,7 +2896,7 @@ class TestProjectDetailAPI:
         res = client.get(self.url(1))
         assert res.status_code == 404
         assert res.data["status"] == 404
-        assert res.data["message"] == "Organization bulunamadı."
+        assert res.data["message"] == "The organization could not be found."
 
     def test_project_not_found_returns_404_when_not_in_org(self, client):
         org1 = self.create_org(name="Org1", slug="org1")
@@ -2904,7 +2914,7 @@ class TestProjectDetailAPI:
         res = client.get(self.url(project_org2.id))
         assert res.status_code == 404
         assert res.data["status"] == 404
-        assert res.data["message"] == "Project bulunamadı."
+        assert res.data["message"] == "Project not found."
 
     def test_project_not_found_returns_404_when_deleted(self, client):
         org = self.create_org()
@@ -2918,7 +2928,7 @@ class TestProjectDetailAPI:
         res = client.get(self.url(project.id))
         assert res.status_code == 404
         assert res.data["status"] == 404
-        assert res.data["message"] == "Project bulunamadı."
+        assert res.data["message"] == "Project not found."
 
     def test_returns_200_with_project_detail_and_appointed_person_none(self, client):
         org = self.create_org()
@@ -2930,7 +2940,7 @@ class TestProjectDetailAPI:
         res = client.get(self.url(project.id))
         assert res.status_code == 200
         assert res.data["status"] == 200
-        assert res.data["message"] == "Project detayı getirildi."
+        assert res.data["message"] == "Project details have been provided."
         assert "data" in res.data
 
         data = res.data["data"]

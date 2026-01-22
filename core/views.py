@@ -44,7 +44,7 @@ class OrganizationCreateAPIView(APIView):
         return Response(
             {
                 "status": 201,
-                "message": "Organization oluşturuldu.",
+                "message": "The organization has been successfully created.",
                 "data": OrganizationCreateSerializer(org).data,
             },
             status=status.HTTP_201_CREATED,
@@ -62,7 +62,7 @@ class OrganizationMeAPIView(APIView):
                 {
                     "status": 200,
                     "data": None,
-                    "message": "Kullanıcı henüz bir organizasyona bağlı değil.",
+                    "message": "The user is not yet affiliated with an organization.",
                 },
                 status=status.HTTP_200_OK,
             )
@@ -72,7 +72,7 @@ class OrganizationMeAPIView(APIView):
                 {
                     "status": 200,
                     "data": OrganizationDetailSerializer(org).data,
-                    "message": "Organizasyon pasif durumda.",
+                    "message": "The organization is inactive.",
                 },
                 status=status.HTTP_200_OK,
             )
@@ -92,7 +92,7 @@ class OrganizationMeUpdateAPIView(APIView):
                 {
                     "status": 200,
                     "data": None,
-                    "message": "Kullanıcı bir organizasyona bağlı değil.",
+                    "message": "The user is not affiliated with an organization.",
                 },
                 status=status.HTTP_200_OK,
             )
@@ -111,7 +111,7 @@ class OrganizationMeUpdateAPIView(APIView):
         return Response(
             {
                 "status": 200,
-                "message": "Organization güncellendi.",
+                "message": "The organization has been updated.",
                 "data": OrganizationDetailSerializer(org).data,
             },
             status=status.HTTP_200_OK,
@@ -125,7 +125,7 @@ class OrganizationInviteCreateAPIView(APIView):
         org = getattr(request.user, "organization", None)
         if not org or org.is_deleted:
             return Response(
-                {"status": 400, "message": "Önce organization oluştur."}, status=400
+                {"status": 400, "message": "First, create an organization."}, status=400
             )
 
         serializer = InvitationCreateSerializer(
@@ -140,13 +140,13 @@ class OrganizationInviteCreateAPIView(APIView):
             send_invite_email(
                 to_email=invite.email, invite_link=invite_link, org_name=org.name
             )
-            msg = "Davet gönderildi."
+            msg = "The invitation has been sent."
             email_delivery = "sent"
         except HTTPError as e:
             logger.warning("Mailgun invite send failed: %s", str(e), exc_info=True)
             INVITE_EMAIL_FAILED_MESSAGE = (
-                "Davet oluşturuldu; e-posta gönderilemedi. "
-                "Davet linkini kopyalayıp paylaşın."
+                "The invitation was created; the email could not be sent. "
+                "Copy and share the invitation link."
             )
             msg = INVITE_EMAIL_FAILED_MESSAGE
             email_delivery = "failed"
@@ -175,8 +175,14 @@ class AcceptInviteAPIView(APIView):
         return Response(
             {
                 "status": 201,
-                "message": "Davet kabul edildi, kayıt tamamlandı.",
-                "data": {"id": user.id, "username": user.username, "email": user.email},
+                "message": (
+                    "The invitation has been accepted, " "registration is complete."
+                ),
+                "data": {
+                    "id": user.id,
+                    "username": user.username,
+                    "email": user.email,
+                },
             },
             status=status.HTTP_201_CREATED,
         )
@@ -191,7 +197,11 @@ class OrganizationMembersListAPIView(APIView):
 
         if not org or org.is_deleted:
             return Response(
-                {"status": 200, "message": "Organization bulunamadı.", "data": []},
+                {
+                    "status": 200,
+                    "message": "The organization could not be found.",
+                    "data": [],
+                },
                 status=status.HTTP_200_OK,
             )
 
@@ -215,7 +225,7 @@ class OrganizationMemberRoleUpdateAPIView(APIView):
             target_user = Users.objects.get(id=id, is_deleted=False)
         except Users.DoesNotExist:
             return Response(
-                {"status": 404, "message": "Kullanıcı bulunamadı."},
+                {"status": 404, "message": "User not found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -229,11 +239,11 @@ class OrganizationMemberRoleUpdateAPIView(APIView):
         serializer.save()
 
         if request.data.get("is_deleted") is True:
-            msg = "Üye silindi."
+            msg = "The member has been deleted."
         elif request.data.get("user_type") == 1:
-            msg = "Üye admin yapıldı."
+            msg = "The member has been made an admin."
         else:
-            msg = "Güncellendi."
+            msg = "Updated."
 
         return Response({"status": 200, "message": msg}, status=status.HTTP_200_OK)
 
@@ -246,7 +256,8 @@ class OrganizationInvitationsListAPIView(APIView):
         org = getattr(request.user, "organization", None)
         if not org or org.is_deleted:
             return Response(
-                {"detail": "Organization bulunamadı."}, status=status.HTTP_404_NOT_FOUND
+                {"detail": "The organization could not be found."},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         status_param = (request.query_params.get("status") or "pending").lower().strip()
@@ -263,7 +274,7 @@ class OrganizationInvitationsListAPIView(APIView):
             pass
         else:
             return Response(
-                {"detail": "Geçersiz status parametresi. pending|used|all"},
+                {"detail": "Invalid status parameter. pending|used|all"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -310,7 +321,7 @@ class ProjectCreateAPIView(APIView):
         return Response(
             {
                 "status": 201,
-                "message": "Project oluşturuldu.",
+                "message": "The project has been created.",
                 "data": ProjectCreateSerializer(project).data,
             },
             status=status.HTTP_201_CREATED,
@@ -329,14 +340,17 @@ class OrganizationUsersAPIView(APIView):
             return Response(
                 {
                     "status": 400,
-                    "message": "Kullanıcıya bağlı bir organization bulunamadı.",
+                    "message": "No organization associated with the user was found.",
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         if user.user_type != 1:
             return Response(
-                {"status": 403, "message": "Bu listeyi görme yetkin yok."},
+                {
+                    "status": 403,
+                    "message": "You do not have permission to view this list.",
+                },
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -364,7 +378,8 @@ class ProjectListAPIView(APIView):
 
         if not org:
             return Response(
-                {"status": 404, "message": "Organization bulunamadı."}, status=404
+                {"status": 404, "message": "The organization could not be found."},
+                status=404,
             )
 
         queryset = Projects.objects.filter(organization=org, is_deleted=False).order_by(
@@ -388,7 +403,8 @@ class MyAppointedProjectsAPIView(APIView):
 
         if not org:
             return Response(
-                {"status": 404, "message": "Organization bulunamadı."}, status=404
+                {"status": 404, "message": "The organization could not be found."},
+                status=404,
             )
 
         queryset = Projects.objects.filter(
@@ -411,7 +427,8 @@ class ProjectUpdateAPIView(APIView):
 
         if not org:
             return Response(
-                {"status": 404, "message": "Organization bulunamadı."}, status=404
+                {"status": 404, "message": "The organization could not be found."},
+                status=404,
             )
 
         project = Projects.objects.filter(
@@ -420,7 +437,7 @@ class ProjectUpdateAPIView(APIView):
 
         if not project:
             return Response(
-                {"status": 404, "message": "Project bulunamadı."}, status=404
+                {"status": 404, "message": "Project not found."}, status=404
             )
 
         is_admin_or_tester = getattr(user, "user_type", None) in (1, 3)
@@ -428,7 +445,11 @@ class ProjectUpdateAPIView(APIView):
 
         if not (is_admin_or_tester or is_appointed):
             return Response(
-                {"status": 403, "message": "Bu project için yetkin yok."}, status=403
+                {
+                    "status": 403,
+                    "message": "There is no one qualified for this project.",
+                },
+                status=403,
             )
 
         serializer = ProjectUpdateSerializer(project, data=request.data, partial=True)
@@ -450,7 +471,8 @@ class ProjectUpdateAPIView(APIView):
             data = ProjectUpdateSerializer(project).data
 
         return Response(
-            {"status": 200, "message": "Project güncellendi.", "data": data}, status=200
+            {"status": 200, "message": "The project has been updated.", "data": data},
+            status=200,
         )
 
 
@@ -463,7 +485,7 @@ class ProjectDetailAPIView(APIView):
 
         if not org:
             return Response(
-                {"status": 404, "message": "Organization bulunamadı."},
+                {"status": 404, "message": "The organization could not be found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -475,7 +497,7 @@ class ProjectDetailAPIView(APIView):
 
         if not project:
             return Response(
-                {"status": 404, "message": "Project bulunamadı."},
+                {"status": 404, "message": "Project not found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -483,7 +505,7 @@ class ProjectDetailAPIView(APIView):
         return Response(
             {
                 "status": 200,
-                "message": "Project detayı getirildi.",
+                "message": "Project details have been provided.",
                 "data": serializer.data,
             },
             status=status.HTTP_200_OK,

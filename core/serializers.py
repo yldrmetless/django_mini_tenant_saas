@@ -23,9 +23,9 @@ class OrganizationCreateSerializer(serializers.ModelSerializer):
 
         value = slugify(value or "")
         if not value:
-            raise serializers.ValidationError("Slug geçersiz.")
+            raise serializers.ValidationError("The slug is invalid.")
         if Organization.objects.filter(slug__iexact=value).exists():
-            raise serializers.ValidationError("Bu slug zaten kullanılıyor.")
+            raise serializers.ValidationError("This slug is already in use.")
         return value
 
     def _generate_unique_slug(self, name: str) -> str:
@@ -89,7 +89,7 @@ class OrganizationUpdateSerializer(serializers.ModelSerializer):
     def validate_slug(self, value):
         value = slugify(value or "")
         if not value:
-            raise serializers.ValidationError("Slug geçersiz.")
+            raise serializers.ValidationError("The slug is invalid.")
 
         org = self.instance
         qs = Organization.objects.filter(slug__iexact=value)
@@ -97,14 +97,14 @@ class OrganizationUpdateSerializer(serializers.ModelSerializer):
             qs = qs.exclude(id=org.id)
 
         if qs.exists():
-            raise serializers.ValidationError("Bu slug zaten kullanılıyor.")
+            raise serializers.ValidationError("This slug is already in use.")
 
         return value
 
     def validate_max_users(self, value):
         if value is not None and value < 1:
             raise serializers.ValidationError(
-                "Maksimum kullanıcı sayısı en az 1 olmalıdır."
+                "The maximum number of users must be at least 1."
             )
         return value
 
@@ -140,18 +140,20 @@ class AcceptInviteSerializer(serializers.Serializer):
             invite = Invitation.objects.select_related("organization").get(token=token)
         except Invitation.DoesNotExist:
             raise serializers.ValidationError(
-                {"token": "Geçersiz davet token."}
+                {"token": "Invalid invitation token."}
             ) from None
 
         if invite.is_used:
-            raise serializers.ValidationError({"token": "Bu davet zaten kullanılmış."})
+            raise serializers.ValidationError(
+                {"token": "This invitation has already been used."}
+            )
 
         if timezone.now() >= invite.expires_at:
-            raise serializers.ValidationError({"token": "Davetin süresi dolmuş."})
+            raise serializers.ValidationError({"token": "The invitation has expired."})
 
         if attrs["email"].lower() != invite.email.lower():
             raise serializers.ValidationError(
-                {"email": "Bu davet bu email için oluşturulmamış."}
+                {"email": "This invitation was not created for this email."}
             )
 
         attrs["invite"] = invite
@@ -167,10 +169,10 @@ class AcceptInviteSerializer(serializers.Serializer):
         if user:
             if user.organization_id and user.organization_id != invite.organization_id:
                 raise serializers.ValidationError(
-                    "Kullanıcı başka bir organization'a bağlı."
+                    "The user is affiliated with another organization."
                 )
         else:
-            user = Users(**validated_data)  # sadece username + email kaldı
+            user = Users(**validated_data)
 
         user.organization = invite.organization
         user.user_type = 2
@@ -219,36 +221,40 @@ class OrgMemberRoleUpdateSerializer(serializers.Serializer):
             or target_user.organization_id != request.user.organization_id
         ):
             raise serializers.ValidationError(
-                "Bu kullanıcı sizin organization'ınıza ait değil."
+                "This user does not belong to your organization."
             )
 
         if target_user.id == request.user.id:
             raise serializers.ValidationError(
-                "Kendi rolünüzü bu endpoint üzerinden değiştiremezsiniz."
+                "You cannot change your role through this endpoint."
             )
 
         wants_delete = attrs.get("is_deleted") is True
         wants_role_change = "user_type" in attrs
 
         if not wants_delete and not wants_role_change:
-            raise serializers.ValidationError("Gönderilecek bir alan yok.")
+            raise serializers.ValidationError("There is no field to send.")
 
         if wants_delete:
             if target_user.user_type == USER_TYPE_ADMIN:
                 raise serializers.ValidationError(
-                    "Admin kullanıcı bu endpoint ile silinemez."
+                    "The admin user cannot be deleted using this endpoint."
                 )
             return attrs
 
         new_role = attrs.get("user_type")
 
         if target_user.user_type == USER_TYPE_ADMIN and new_role == USER_TYPE_MEMBER:
-            raise serializers.ValidationError("Admin kullanıcı member'a düşürülemez.")
+            raise serializers.ValidationError(
+                "The admin user cannot be demoted to member."
+            )
 
         if target_user.user_type == USER_TYPE_MEMBER and new_role == USER_TYPE_ADMIN:
             return attrs
 
-        raise serializers.ValidationError("Bu rol değişimi için izin yok.")
+        raise serializers.ValidationError(
+            "There is no permission for this role change."
+        )
 
     def update(self, instance, validated_data):
         if validated_data.get("is_deleted") is True:
@@ -343,7 +349,7 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
 
         if appointed_user and appointed_user.organization_id != org.id:
             raise serializers.ValidationError(
-                "Atanan kişi aynı organization içinde olmalı."
+                "The appointed person must be within the same organization."
             )
         return appointed_user
 
@@ -407,5 +413,5 @@ class ProjectUpdateSerializer(serializers.ModelSerializer):
     def validate_status(self, value):
         allowed = {c[0] for c in Projects._meta.get_field("status").choices}
         if value not in allowed:
-            raise serializers.ValidationError("Geçersiz status değeri.")
+            raise serializers.ValidationError("Invalid status value.")
         return value

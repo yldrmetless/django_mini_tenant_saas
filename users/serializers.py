@@ -24,19 +24,21 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def validate_email(self, value):
         if value and User.objects.filter(email__iexact=value).exists():
-            raise serializers.ValidationError("Bu email zaten kullanılıyor.")
+            raise serializers.ValidationError("This email address is already in use.")
         return value
 
     def validate_username(self, value):
         if value and User.objects.filter(username__iexact=value).exists():
-            raise serializers.ValidationError("Bu kullanıcı adı zaten kullanılıyor.")
+            raise serializers.ValidationError("This username is already in use.")
         return value
 
     def validate(self, attrs):
         p1 = attrs.get("password")
         p2 = attrs.get("password2")
         if p2 is not None and p1 != p2:
-            raise serializers.ValidationError({"password2": "Şifreler eşleşmiyor."})
+            raise serializers.ValidationError(
+                {"password2": "The passwords do not match."}
+            )
         return attrs
 
     def create(self, validated_data):
@@ -57,10 +59,10 @@ class LoginSerializer(serializers.Serializer):
 
         user = authenticate(username=username, password=password)
         if not user:
-            raise serializers.ValidationError("Kullanıcı adı veya şifre hatalı.")
+            raise serializers.ValidationError("The username or password is incorrect.")
 
         if not user.is_active:
-            raise serializers.ValidationError("Bu hesap pasif.")
+            raise serializers.ValidationError("This account is inactive.")
 
         attrs["user"] = user
         return attrs
@@ -94,18 +96,18 @@ class UpdateProfileSerializer(serializers.Serializer):
         user = self.context["request"].user
         value = (value or "").strip()
         if not value:
-            raise serializers.ValidationError("Kullanıcı adı boş olamaz.")
+            raise serializers.ValidationError("The username cannot be blank.")
         if User.objects.filter(username__iexact=value).exclude(pk=user.pk).exists():
-            raise serializers.ValidationError("Bu kullanıcı adı zaten kullanılıyor.")
+            raise serializers.ValidationError("This username is already in use.")
         return value
 
     def validate_email(self, value):
         user = self.context["request"].user
         value = (value or "").strip()
         if not value:
-            raise serializers.ValidationError("Email boş olamaz.")
+            raise serializers.ValidationError("Email cannot be empty.")
         if User.objects.filter(email__iexact=value).exclude(pk=user.pk).exists():
-            raise serializers.ValidationError("Bu email zaten kullanılıyor.")
+            raise serializers.ValidationError("This email address is already in use.")
         return value
 
     def validate(self, attrs):
@@ -119,21 +121,21 @@ class UpdateProfileSerializer(serializers.Serializer):
             np2 = attrs.get("new_password2")
 
             if not cp:
-                raise serializers.ValidationError("Mevcut şifre zorunlu.")
+                raise serializers.ValidationError("Current password is required.")
 
             if not np1:
-                raise serializers.ValidationError("Yeni şifre zorunlu.")
+                raise serializers.ValidationError("New password required.")
 
             if not np2:
-                raise serializers.ValidationError("Yeni şifre tekrar zorunlu.")
+                raise serializers.ValidationError("New password required again.")
 
             if np1 != np2:
-                raise serializers.ValidationError("Yeni şifreler eşleşmiyor.")
+                raise serializers.ValidationError("The new passwords do not match.")
 
             user = self.context["request"].user
 
             if not user.check_password(cp):
-                raise serializers.ValidationError("Mevcut şifre hatalı.")
+                raise serializers.ValidationError("The current password is incorrect.")
 
         return attrs
 

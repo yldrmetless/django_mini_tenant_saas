@@ -22,7 +22,7 @@ class RegisterAPIView(APIView):
         return Response(
             {
                 "status": 201,
-                "message": "Kayıt başarılı.",
+                "message": "Registration successful.",
                 "data": RegisterSerializer(user).data,
             },
             status=status.HTTP_201_CREATED,
@@ -38,7 +38,7 @@ class LoginAPIView(APIView):
         data = serializer.save()
 
         return Response(
-            {"status": 200, "message": "Giriş başarılı.", "data": data},
+            {"status": 200, "message": "Login successful.", "data": data},
             status=status.HTTP_200_OK,
         )
 
@@ -57,7 +57,7 @@ class UpdateProfileAPIView(APIView):
         serializer.save()
 
         return Response(
-            {"status": 200, "message": "Profil güncellendi."},
+            {"status": 200, "message": "Profile updated."},
             status=status.HTTP_200_OK,
         )
 

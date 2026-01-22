@@ -30,7 +30,7 @@ class TestRegisterAPI:
 
         assert res.status_code == 201
         assert res.data["status"] == 201
-        assert res.data["message"] == "Kayıt başarılı."
+        assert res.data["message"] == "Registration successful."
 
         created_id = res.data["data"]["id"]
         user = Users.objects.get(id=created_id)
@@ -120,7 +120,7 @@ class TestLoginAPI:
 
         assert res.status_code == 200
         assert res.data["status"] == 200
-        assert res.data["message"] == "Giriş başarılı."
+        assert res.data["message"] == "Login successful."
 
         data = res.data["data"]
         assert "refresh" in data
@@ -203,7 +203,7 @@ class TestUpdateProfileAPI:
         res = client.patch(url, payload, format="json")
         assert res.status_code == 200
         assert res.data["status"] == 200
-        assert res.data["message"] == "Profil güncellendi."
+        assert res.data["message"] == "Profile updated."
 
         user.refresh_from_db()
         assert user.first_name == "Metehan"
