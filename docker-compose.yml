@@ -1,15 +1,36 @@
 services:
   db:
-    image: postgres:17-alpine
-    container_name: myapp_postgres
+    image: postgres:17
+    container_name: minitenantsaas_db
     environment:
-      POSTGRES_DB: app_db
-      POSTGRES_USER: app_user
-      POSTGRES_PASSWORD: app_password
+      POSTGRES_DB: django_mini_tenant_saas
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
-    - "5433:5432"
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d django_mini_tenant_saas"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    container_name: minitenantsaas_web
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.docker
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   pgdata:
