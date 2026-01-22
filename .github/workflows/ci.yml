@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+    branches: ["main", "master"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: django_mini_tenant_saas
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d django_mini_tenant_saas"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      # Django settings
+      DJANGO_SETTINGS_MODULE: minitenantsaas.settings
+      SECRET_KEY: test-secret-key
+      DEBUG: "1"
+
+      # Database (settings.py'de env ile okuyorsan burayı uyarlarsın)
+      DB_NAME: django_mini_tenant_saas
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: 127.0.0.1
+      DB_PORT: "5432"
+
+      # Mailgun / frontend gibi zorunlu env bekleyen yerler varsa dummy ver
+      FRONTEND_BASE_URL: http://localhost:3000
+      MAILGUN_DOMAIN: example.com
+      MAILGUN_API_KEY: test
+      MAILGUN_FROM: test@example.com
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          # Dev tools ayrı dosyadaysa:
+          # pip install -r requirements-dev.txt
+          pip install pytest pytest-django pytest-cov
+          pip install black isort ruff
+
+      - name: isort check
+        run: isort --check-only .
+
+      - name: black check
+        run: black --check .
+
+      - name: ruff check
+        run: ruff check .
+
+      - name: Run migrations check (optional)
+        run: |
+          python manage.py makemigrations --check --dry-run
+
+      - name: Run tests with coverage
+        run: |
+          pytest --cov --cov-report=term-missing

@@ -512,7 +512,7 @@ class TestOrganizationInviteCreateAPI:
 
     def test_invite_success_email_sent(self, client, url, monkeypatch, settings):
         """
-        send_invite_email başarılı => message 'Davet gönderildi.' 
+        send_invite_email başarılı => message 'Davet gönderildi.'
         ve email_delivery 'sent'
         """
         org = Organization.objects.create(
@@ -563,7 +563,7 @@ class TestOrganizationInviteCreateAPI:
         self, client, url, monkeypatch, settings
     ):
         """
-        send_invite_email HTTPError fırlatır => message 'Davet oluşturuldu; 
+        send_invite_email HTTPError fırlatır => message 'Davet oluşturuldu;
         e-posta gönderilemedi...' ve email_delivery 'failed'
         """
         from requests import HTTPError
@@ -895,9 +895,7 @@ class TestOrganizationMembersListAPI:
         assert res.data["message"] == "Organization bulunamadı."
         assert res.data["data"] == []
 
-    def test_list_members_paginated_ordered(
-        self, client, url
-    ):
+    def test_list_members_paginated_ordered(self, client, url):
         org = Organization.objects.create(
             name="Org",
             slug="org",
@@ -1854,10 +1852,10 @@ class TestProjectCreateAPI:
 
     def test_appointed_person_must_be_active_and_not_deleted(self, client, url):
         """
-        appointed_person field queryset: 
+        appointed_person field queryset:
         Users.objects.filter(is_deleted=False, is_active=True)
         Bu yüzden:
-        - is_active=False veya is_deleted=True user seçilirse DRF 
+        - is_active=False veya is_deleted=True user seçilirse DRF
         'Invalid pk' döndürmeli.
         """
         org = self.create_org()
